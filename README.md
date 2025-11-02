@@ -14,6 +14,15 @@ Python × Kivyで構築し、ローカル環境で動作する。
 | 主な機能 | 学習記録の登録・削除・集計・可視化 |
 | 目標 | GUI + データ処理 + 永続化の統合学習 |
 
+## 📂 ディレクトリ構成
+
+learning-tracker/
+├── logic/ # ビジネスロジック層（Tracker, DataManager）
+├── ui/ # UI構築層（Kivyファイル）
+├── tests/ # pytest用テストコード
+├── data/ # SQLite DBなど
+└── main.py # エントリーポイント
+
 ## 💡 機能（予定含む）
 - 学習項目の登録・編集・削除  
 - 日付ごとの進捗記録  
