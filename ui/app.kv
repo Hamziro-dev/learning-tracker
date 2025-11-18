@@ -1,0 +1,81 @@
+ScreenManager:
+    id: sm
+    LoginScreen:
+        name: "login"
+    RecordScreen:
+        name: "record"
+    GraphScreen:
+        name: "graph"
+
+<LoginScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "40dp"
+        spacing: "30dp"
+
+        MDLabel:
+            text: "学習トラッカー ログイン"
+            halign: "center"
+            theme_font_style: "H5"
+            adaptive_height: True
+
+        MDTextField:
+            id: username
+            hint_text: "ユーザー名"
+
+        MDTextField:
+            id: password
+            hint_text: "パスワード"
+            password: True
+
+        MDButton:
+            text: "ログイン"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.login(username.text, password.text)
+
+<RecordScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "10dp"
+        spacing: "10dp"
+
+        MDLabel:
+            text: "📊 学習進捗トラッカー"
+            halign: "center"
+            theme_font_style: "H5"
+            adaptive_height: True
+
+        MDButton:
+            text: "Python 1時間追加"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.add_record("Python", 1)
+
+        MDButton:
+            text: "📈 グラフを表示"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.show_graph()
+
+        ScrollView:
+            MDList:
+                id: record_list
+
+<GraphScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: "20dp"
+        padding: "10dp"
+
+        MDLabel:
+            text: "📈 学習グラフ"
+            halign: "center"
+            theme_font_style: "H5"
+
+        MDBoxLayout:
+            orientation: "vertical"
+            id: graph_box
+            size_hint_y: 0.8
+
+        MDButton:
+            text: "戻る"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.root.current = "record"

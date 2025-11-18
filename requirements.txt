@@ -1,0 +1,106 @@
+# Learning Tracker 要件定義書（v1.0）
+
+## 1. プロジェクト概要
+| 項目 | 内容 |
+|------|------|
+| **システム名** | Learning Tracker |
+| **目的** | 学習時間・進捗・目標を可視化し、継続的な学習管理を支援する。複数ユーザー対応により、チームや学習仲間間での進捗比較も可能にする。 |
+| **開発言語** | Python 3.13 |
+| **フレームワーク** | Kivy / KivyMD |
+| **データベース** | SQLite（将来的に PostgreSQL へ移行可能） |
+| **対象ユーザー** | 学習者・エンジニア・資格勉強者など自己学習を可視化したいユーザー |
+| **利用環境** | Windows / macOS / Linux |
+
+---
+
+## 2. システム構成図
++----------------------+
+| KivyMD UI |
+| (Login / Dashboard) |
++----------+-----------+
+|
+v
++----------------------+
+| Logic Layer |
+| Tracker / DBManager |
++----------+-----------+
+|
+v
++----------------------+
+| SQLite DB |
+| (Users / Subjects / |
+| Records Tables) |
++----------------------+
+
+yaml
+コードをコピーする
+
+---
+
+## 3. 機能一覧
+| 区分 | 機能名 | 概要 | 優先度 |
+|------|---------|------|--------|
+| **認証機能** | ユーザー登録 | ユーザー名・メール・パスワードで登録 | ★★★ |
+|  | ログイン／ログアウト | ハッシュ認証によるログイン機構 | ★★★ |
+| **学習管理** | 教科登録 | 学習対象科目を追加（color_code指定可能） | ★★★ |
+|  | 記録追加 | 学習時間・メモ・日付を登録 | ★★★ |
+|  | 記録編集／削除 | 既存データの修正／削除 | ★★☆ |
+|  | 目標設定 | 教科ごとに目標時間を設定 | ★★☆ |
+| **データ可視化** | グラフ描画 | 日次・週次・月次の棒グラフ／折れ線グラフ | ★★★ |
+|  | 達成率計算 | 記録時間 ÷ 目標時間 × 100 (%) | ★★☆ |
+| **UI／UX** | ダーク／ライトテーマ切替 | KivyMD標準テーマを活用 | ★☆☆ |
+|  | 記録一覧スクロール表示 | 直近の学習履歴を一覧表示 | ★★★ |
+
+---
+
+## 4. DB設計（ER図準拠）
+
+### ■ users
+| カラム | 型 | 制約 | 説明 |
+|--------|----|------|------|
+| user_id | INTEGER | PK | ユーザーID |
+| username | TEXT | NOT NULL | 表示名 |
+| email | TEXT | UNIQUE, NOT NULL | メールアドレス |
+| password_hash | TEXT | NOT NULL | パスワードハッシュ |
+| created_at | TEXT | DEFAULT CURRENT_TIMESTAMP | 登録日時 |
+
+### ■ subjects
+| カラム | 型 | 制約 | 説明 |
+|--------|----|------|------|
+| subject_id | INTEGER | PK | 教科ID |
+| user_id | INTEGER | FK (users.user_id) | 所有ユーザー |
+| subject_name | TEXT | NOT NULL | 教科名 |
+| color_code | TEXT |  | 表示カラー |
+
+### ■ records
+| カラム | 型 | 制約 | 説明 |
+|--------|----|------|------|
+| record_id | INTEGER | PK | 記録ID |
+| user_id | INTEGER | FK (users.user_id) | 記録者 |
+| subject_id | INTEGER | FK (subjects.subject_id) | 教科 |
+| date | TEXT | NOT NULL | 記録日 |
+| hours | REAL | NOT NULL | 学習時間 |
+| note | TEXT |  | メモ |
+| goal_hours | REAL |  | 目標時間 |
+| status | TEXT | DEFAULT 'ongoing' | 状態（ongoing / done） |
+
+---
+
+## 5. 想定画面構成
+| 画面 | 機能 | UI構成（KivyMD） |
+|------|------|-------------------|
+| **ログイン画面** | ログイン／新規登録 | `MDTextField` × 2 + `MDButton` |
+| **ダッシュボード** | 総学習時間・今日の学習量表示 | `MDLabel`, `MDCard`, `MDProgressBar` |
+| **教科管理画面** | 教科追加・色設定 | `MDDialog`, `MDList`, `MDChip` |
+| **記録入力画面** | 学習時間とメモ入力 | `MDTextField`, `MDDatePicker` |
+| **グラフ画面** | 学習履歴可視化 | `Matplotlib`＋`Kivy canvas`埋め込み |
+
+---
+
+## 6. 今後の開発ロードマップ
+| フェーズ | 目標 | 実装要素 |
+|-----------|------|-----------|
+| **Phase 1** | SQLite移行＋ログイン画面表示 | DBManager / 認証モジュール作成 |
+| **Phase 2** | 教科・記録CRUD実装 | KivyMDフォーム／一覧画面 |
+| **Phase 3** | グラフ描画＋達成率計算 | Matplotlib埋め込み |
+| **Phase 4** | UI改善＋リリース準備 | ダークテーマ・デプロイ対応 |
