@@ -38,7 +38,7 @@ learning-tracker/<br>
 【堅牢なデータ設計】単純なカウンターではなく、開始時刻・終了時刻を記録するログ形式を採用し、アプリクラッシュ時やリロード時のデータ整合性を担保しました。<br>
 【保守性の向上】当初は main.py にベタ書きしていたSQL処理を DBManager クラスに切り出し、責務を分離しました。<br>
 
-## 📜 ライセンス
+## ライセンス
 MIT License
 
-📝 開発ログはこちら → [Qiita: ハム二郎の学習記録](https://qiita.com/Hamziro_dev)
+- 開発ログはこちら → [Qiita: ハム二郎の学習記録](https://qiita.com/Hamziro_dev)
