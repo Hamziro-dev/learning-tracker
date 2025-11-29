@@ -26,7 +26,7 @@ Python (Kivy/KivyMD) を採用し、Windows等のデスクトップ環境でロ�
 
 ## 📂 ディレクトリ構成
 
-learning-tracker/
+learning-tracker/<br>
 ├── data/ (app_data.db)<br>
 ├── logic/ (db_manager.py)<br>
 ├── ui/ (app.kv)<br>
