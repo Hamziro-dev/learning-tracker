@@ -1,81 +1,149 @@
-ScreenManager:
-    id: sm
-    LoginScreen:
-        name: "login"
-    RecordScreen:
-        name: "record"
-    GraphScreen:
-        name: "graph"
+#:kivy 2.3.0
 
+# 画面遷移マネージャー（これがないと画面が切り替わらない）
+MDScreenManager:
+    LoginScreen:
+    RecordScreen:
+    GraphScreen:
+
+# ==========================================================
+# 1. ログイン画面
+# ==========================================================
 <LoginScreen>:
+    name: "login"
+    
     MDBoxLayout:
         orientation: "vertical"
-        padding: "40dp"
-        spacing: "30dp"
+        padding: "20dp"
+        spacing: "20dp"
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        adaptive_height: True
 
         MDLabel:
-            text: "学習トラッカー ログイン"
+            text: "学習記録トラッカー"
             halign: "center"
-            theme_font_style: "H5"
+            font_style: "Headline"
+            role: "medium"
             adaptive_height: True
 
+        # ユーザー名入力欄 (Python側の self.ids.username で参照)
         MDTextField:
             id: username
-            hint_text: "ユーザー名"
+            mode: "outlined"
+            MDTextFieldHintText:
+                text: "ユーザー名"
 
+        # パスワード入力欄 (Python側の self.ids.password で参照)
         MDTextField:
             id: password
-            hint_text: "パスワード"
+            mode: "outlined"
             password: True
+            MDTextFieldHintText:
+                text: "パスワード"
 
         MDButton:
-            text: "ログイン"
+            style: "filled"
             pos_hint: {"center_x": 0.5}
-            on_release: app.login(username.text, password.text)
+            # ボタンを押すと LoginScreenクラスの login() が呼ばれる
+            on_release: root.login()
+            
+            MDButtonText:
+                text: "ログイン / 新規登録"
 
+# ==========================================================
+# 2. 記録＆ストップウォッチ画面
+# ==========================================================
 <RecordScreen>:
+    name: "record"
+
     MDBoxLayout:
         orientation: "vertical"
         padding: "10dp"
         spacing: "10dp"
 
+        # --- ヘッダー ---
         MDLabel:
-            text: "📊 学習進捗トラッカー"
-            halign: "center"
-            theme_font_style: "H5"
+            text: "学習記録"
+            font_style: "Title"
+            role: "large"
             adaptive_height: True
+            halign: "center"
 
-        MDButton:
-            text: "Python 1時間追加"
+        # --- ストップウォッチ入力エリア ---
+        MDCard:
+            style: "elevated"
+            padding: "10dp"
+            spacing: "10dp"
+            orientation: "vertical"
+            adaptive_height: True
             pos_hint: {"center_x": 0.5}
-            on_release: app.add_record("Python", 1)
 
-        MDButton:
-            text: "📈 グラフを表示"
-            pos_hint: {"center_x": 0.5}
-            on_release: app.show_graph()
+            # 科目名 (Python側の self.ids.txt_subject で参照)
+            MDTextField:
+                id: txt_subject
+                mode: "outlined"
+                MDTextFieldHintText:
+                    text: "科目名を入力 (例: 憲法)"
 
+            # タイマー表示 (Python側の self.ids.lbl_timer で参照)
+            MDLabel:
+                id: lbl_timer
+                text: "00:00:00"
+                halign: "center"
+                font_style: "Display"
+                role: "medium"
+                adaptive_height: True
+
+            # スタート/ストップボタン (Python側の self.ids.btn_toggle で参照)
+            MDButton:
+                id: btn_toggle
+                style: "filled"
+                pos_hint: {"center_x": 0.5}
+                # ここでRecordScreenのtoggle_stopwatchを呼ぶ
+                on_release: root.toggle_stopwatch()
+
+                MDButtonText:
+                    text: "START"
+
+        # --- 履歴リスト表示エリア ---
         ScrollView:
             MDList:
                 id: record_list
 
+        # --- フッター（グラフ画面へ） ---
+        MDButton:
+            style: "text"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.show_graph()
+            
+            MDButtonText:
+                text: "グラフを見る"
+
+# ==========================================================
+# 3. グラフ画面
+# ==========================================================
 <GraphScreen>:
+    name: "graph"
+
     MDBoxLayout:
         orientation: "vertical"
-        spacing: "20dp"
-        padding: "10dp"
-
+        
         MDLabel:
-            text: "📈 学習グラフ"
+            text: "グラフ画面"
             halign: "center"
-            theme_font_style: "H5"
+            adaptive_height: True
+            padding: "20dp"
 
-        MDBoxLayout:
+        # ここにMatplotlibのグラフが差し込まれるエリア
+        BoxLayout:
+            id: graph_area
             orientation: "vertical"
-            id: graph_box
-            size_hint_y: 0.8
 
         MDButton:
-            text: "戻る"
+            style: "text"
             pos_hint: {"center_x": 0.5}
-            on_release: app.root.current = "record"
+            on_release: app.switch_to_main_screen()
+            padding: "20dp"
+            
+            MDButtonText:
+                text: "戻る"
