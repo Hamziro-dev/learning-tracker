@@ -2,56 +2,11 @@
 
 # 画面遷移マネージャー（これがないと画面が切り替わらない）
 MDScreenManager:
-    LoginScreen:
     RecordScreen:
     GraphScreen:
 
 # ==========================================================
-# 1. ログイン画面
-# ==========================================================
-<LoginScreen>:
-    name: "login"
-    
-    MDBoxLayout:
-        orientation: "vertical"
-        padding: "20dp"
-        spacing: "20dp"
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
-        adaptive_height: True
-
-        MDLabel:
-            text: "学習記録トラッカー"
-            halign: "center"
-            font_style: "Headline"
-            role: "medium"
-            adaptive_height: True
-
-        # ユーザー名入力欄 (Python側の self.ids.username で参照)
-        MDTextField:
-            id: username
-            mode: "outlined"
-            MDTextFieldHintText:
-                text: "ユーザー名"
-
-        # パスワード入力欄 (Python側の self.ids.password で参照)
-        MDTextField:
-            id: password
-            mode: "outlined"
-            password: True
-            MDTextFieldHintText:
-                text: "パスワード"
-
-        MDButton:
-            style: "filled"
-            pos_hint: {"center_x": 0.5}
-            # ボタンを押すと LoginScreenクラスの login() が呼ばれる
-            on_release: root.login()
-            
-            MDButtonText:
-                text: "ログイン / 新規登録"
-
-# ==========================================================
-# 2. 記録＆ストップウォッチ画面
+# 1. 記録＆ストップウォッチ画面
 # ==========================================================
 <RecordScreen>:
     name: "record"
@@ -120,7 +75,7 @@ MDScreenManager:
                 text: "グラフを見る"
 
 # ==========================================================
-# 3. グラフ画面
+# 2. グラフ画面
 # ==========================================================
 <GraphScreen>:
     name: "graph"
