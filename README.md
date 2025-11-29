@@ -24,6 +24,39 @@ Python (Kivy/KivyMD) を採用し、Windows等のデスクトップ環境でロ�
 | データベース | SQLite3 | ローカル永続化 |
 | アーキテクチャ | MVC風構成 | UIとロジックの分離 |
 
+## システム設計
+
+### ▼ システム構成図
+Windows等のクライアントPC上で完結するスタンドアローン構成です。<br>
+外部サーバーとの通信を行わないため、オフライン環境でも動作し、学習データのプライバシーが保護されます。<br>
+
+<img width="381" height="436" alt="システム構成 drawio" src="https://github.com/user-attachments/assets/a787011d-b1b2-421c-976d-1353b7ad19c7" /><br>
+
+### ▼ ER図（データ設計）
+YAGNI原則に基づき、認証機能を排除したシングルユーザー・シングルテーブル構成を採用しました。<br>
+実用最小限の設計により、高速な動作と堅牢なデータ整合性を実現しています。<br>
+
+<img width="521" height="231" alt="ER図 drawio" src="https://github.com/user-attachments/assets/3a72d166-c34c-4c96-b33e-39f900e89321" /><br>
+
+## 動作環境・セットアップ
+
+```bash
+# リポジトリのクローン
+git clone [https://github.com/Hamziro-dev/learning-tracker.git](https://github.com/Hamziro-dev/learning-tracker.git)
+cd learning-tracker
+
+# 仮想環境の作成と有効化
+python -m venv venv
+# Windowsの場合
+.\venv\Scripts\activate
+
+# 依存ライブラリのインストール
+pip install -r requirements.txt
+
+# アプリの起動
+python main.py
+```
+
 ## ディレクトリ構成
 
 learning-tracker/<br>
