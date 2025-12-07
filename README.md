@@ -1,17 +1,14 @@
-# Learning Tracker   
-日々の学習時間を「見える化」し、継続を支援するデスクトップアプリ
+# Learning Tracker(Server-Side Edition)
+**PostgreSQL + WSL2 + 自動バックアップ運用を実装した、実務想定の発展版** 
+> [!IMPORTANT]
+> このブランチ (`feature/postgresql`) は、インフラ構築と運用自動化のスキルを実証するための**クライアント・サーバー構成版**です。
+> アプリケーションの動作には **WSL2 (Ubuntu)** および **PostgreSQL** の環境構築が必須となります。
+> 簡易的な動作確認を行いたい場合は、スタンドアローン構成の **[`main`](https://github.com/Hamziro-dev/learning-tracker/tree/main)** ブランチをご利用ください。  
+
 ![result](https://github.com/user-attachments/assets/0534be88-6561-49bd-80fe-44f42ec72245)
 
-## 概要
-学習項目ごとの時間をストップウォッチ形式で計測・記録し、過去の積み上げを可視化するGUIアプリケーションです。<br>
-「勉強時間を手軽に記録したいが、既存のスマホアプリではPC作業中に気が散る」という自身の課題を解決するために開発しました。
-Python (Kivy/KivyMD) を採用し、Windows等のデスクトップ環境でローカルかつ軽量に動作します。<br>
-また、UI/状態管理/永続化/テストの基礎を一つの成果物で同時に鍛え、以下の2つを積み上げる目的もあります。<br>
-（1）学習ログの記録・可視化<br>
-（2）GUI・DB・テストの実装経験
-
-## 🌿 ブランチ運用とエディション構成
-本リポジトリでは、異なる**運用環境（デプロイメントモデル）**に対応するため、以下の2つのブランチを並行して管理しています。
+## ブランチとエディション構成
+本リポジトリでは、異なる**運用環境（デプロイメントモデル）** に対応するため、以下の2つのブランチを並行して管理しています。
 両者はデータベース接続方式およびインフラ要件が根本的に異なるため、マージせずに独立した構成としています。
 
 | ブランチ | アーキテクチャ | DB構成 | インフラ要件 |
@@ -21,78 +18,68 @@ Python (Kivy/KivyMD) を採用し、Windows等のデスクトップ環境でロ�
 
 > [!NOTE]
 > **Technical Note**
-> * **main:** データの永続化をローカルファイルで行う、ポータビリティを最優先した構成です。
-> * **feature/postgresql:** データの永続化を外部RDBMSで行う、スケーラビリティと運用自動化（バックアップ等）を重視した構成です。
+> - **main：** データの永続化をローカルファイルで行う、ポータビリティを最優先した構成です。
+> - **feature/postgresql：** データの永続化を外部RDBMSで行う、スケーラビリティと運用自動化（バックアップ等）を重視した構成です。
 
-## 特徴
-【シンプルな計測】科目名を入力してボタンを押すだけのミニマルなUI。<br>
-【正確な記録】アプリを閉じても計測が途切れないデータ永続化設計。<br>
-【即時の可視化】SQLiteデータベースによる履歴のリスト表示・グラフ化機能。<br>
-【YAGNI原則に基づく設計】過剰な認証機能を排除し、起動から1秒で計測開始できるシングルユーザー特化仕様。<br>
-
-## 技術仕様 (Main Branch)
+## 技術仕様 (Feature Branch)
 | カテゴリ | 技術 | 備考 |
 |---|---|---|
-| 言語 | Python 3.13 | 型ヒント活用 |
-| GUIフレームワーク | Kivy 2.3.1 / KivyMD | マテリアルデザイン適用 |
-| データベース | **SQLite3** | ローカル永続化（ポータブル） |
-| アーキテクチャ | MVC風構成 | UIとロジックの分離 |
+| 言語 | Python 3.13 | |
+| GUIフレームワーク | Kivy 2.3.1 | Windows側で動作 |
+| **Database** | **PostgreSQL 16** | **WSL2 (Ubuntu) 上で稼働** |
+| **Infra** | **WSL2 / Linux** | クライアント・サーバー構成 |
+| **Ops** | **Bash / Cron** | 自動バックアップ・世代管理 |
 
-## システム設計
+## システム設計 (本ブランチの変更点)
 
-### ▼ システム構成図
-Windows等のクライアントPC上で完結するスタンドアローン構成です。<br>
-外部サーバーとの通信を行わないため、オフライン環境でも動作し、学習データのプライバシーが保護されます。
+### ▼ クライアント・サーバー構成
+本バージョンでは、クライアント（Windows/Python）とデータベース（Linux/PostgreSQL）を分離した **3層スキーマ構成** を採用しています。
+Windows上のアプリから、TCP/IP経由でWSL2上のDBサーバーへ接続し、データを永続化します。
 
-<img width="381" height="436" alt="システム構成 drawio" src="https://github.com/user-attachments/assets/a787011d-b1b2-421c-976d-1353b7ad19c7" /><br>
-
-### ▼ ER図（データ設計）
-YAGNI原則に基づき、認証機能を排除したシングルユーザー・シングルテーブル構成を採用しました。<br>
-実用最小限の設計により、高速な動作と堅牢なデータ整合性を実現しています。<br>
-
-<img width="521" height="231" alt="ER図 drawio" src="https://github.com/user-attachments/assets/3a72d166-c34c-4c96-b33e-39f900e89321" /><br>
+**ネットワーク構成：**
+- **Client：** Windows 11 (Python / Psycopg2)
+- **Server：** WSL2 Ubuntu 24.04 (PostgreSQL)
+- **Connection：** TCP/IP (localhost:5432)
 
 ## 動作環境・セットアップ
+本ブランチの動作には、以下のインフラ構築が必要です。
+
+### 1. インフラ構築 (WSL2 / Ubuntu)
+```bash
+# PostgreSQLのインストール
+sudo apt update && sudo apt install postgresql postgresql-contrib libpq-dev -y
+
+# 外部接続の許可設定 (postgresql.conf / pg_hba.conf)
+# Windows側からのTCP/IP接続を許可する設定を実施
+```
+
+### 2. アプリケーションのセットアップ (Windows)
 
 ```bash
-# リポジトリのクローン
+# リポジトリのクローンとブランチ切り替え
 git clone [https://github.com/Hamziro-dev/learning-tracker.git](https://github.com/Hamziro-dev/learning-tracker.git)
 cd learning-tracker
+git checkout feature/postgresql
 
-# 仮想環境の作成と有効化
+# 仮想環境と依存ライブラリ (psycopg2含む)
 python -m venv venv
-# Windowsの場合
 .\venv\Scripts\activate
-
-# 依存ライブラリのインストール
 pip install -r requirements.txt
 
-# アプリの起動
+# アプリ起動
 python main.py
 ```
 
-## ディレクトリ構成
+## 運用自動化
+本環境では、データの保全性を高めるため、以下の運用スクリプトを稼働させています。
 
-learning-tracker/<br>
-├── data/ (app_data.db)<br>
-├── logic/ (db_manager.py)<br>
-├── ui/ (app.kv)<br>
-├── fonts/ <br>
-└── main.py  <br>
+- バックアップ：pg_dump を用いてDBダンプを取得し、gzip圧縮して保存。
 
-## 💡工夫した点
-【非同期とイベントループの理解】Kivy Clock を使用し、GUIをフリーズさせずに正確なタイマー処理を実装しました。<br>
-【堅牢なデータ設計】単純なカウンターではなく、開始時刻・終了時刻を記録するログ形式を採用し、アプリクラッシュ時やリロード時のデータ整合性を担保しました。<br>
-【保守性の向上】当初は main.py にベタ書きしていたSQL処理を DBManager クラスに切り出し、責務を分離しました。<br>
+- 世代管理：7日以上前のバックアップファイルを自動削除。
 
-### Server-Side Edition での挑戦
-別ブランチ（feature/postgresql）では、以下の拡張実装を行っています。
-- **RDBMSへの移行：**
-SQLiteからPostgreSQLへ移行し、型安全性と同時接続性を考慮した設計に変更しました。
-- **インフラ構築：** 
-Windows上でWSL2 (Ubuntu) をセットアップし、LinuxコマンドのみでDBサーバー構築・ネットワーク設定を行いました。
-- **運用自動化：** 
-ShellScriptとCronを組み合わせ、毎晩3:00にDBバックアップを取得し、7日以上前のファイルを自動削除する世代管理システムを構築しました。
+- スケジューリング：Cron により毎日AM 3:00に自動実行。
+
+- スクリプト本体：backup.sh
 
 ## ライセンス
 MIT License
