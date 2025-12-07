@@ -17,7 +17,6 @@
 | **[`feature/postgresql`](https://github.com/Hamziro-dev/learning-tracker/tree/feature/postgresql)** | **クライアント・サーバー型** | **PostgreSQL** | **WSL2 + DB Server**<br>(ネットワーク接続・3層構成) |
 
 > [!NOTE]
-> **Technical Note**
 > - **main：** データの永続化をローカルファイルで行う、ポータビリティを最優先した構成です。
 > - **feature/postgresql：** データの永続化を外部RDBMSで行う、スケーラビリティと運用自動化（バックアップ等）を重視した構成です。
 
