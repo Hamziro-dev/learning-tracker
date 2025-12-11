@@ -4,20 +4,36 @@ import datetime
 
 class DBManager:
     def __init__(self):
-        # データベースファイルのパス設定
-        base_dir = os.path.dirname(os.path.dirname(__file__))  # logicの親ディレクトリ
-        db_path = os.path.join(base_dir, "app_data.db")
+        self.conn = None
+        self.cursor = None
         
-        # データベース接続
-        # check_same_thread=False はKivyのようなGUIアプリでスレッドエラーを防ぐために必要
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
-        self.conn.row_factory = sqlite3.Row  # カラム名でアクセスできるようにする
-        self.cursor = self.conn.cursor()
-        
-        # テーブル作成
-        self.create_tables()
+        # パス設定
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        self.db_path = os.path.join(base_dir, "app_data.db")
+
+    def connect(self):
+        """アプリ起動後（on_start）に呼ばれる接続メソッド"""
+        if self.conn is not None:
+            return
+
+        try:
+            # 接続処理
+            self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            self.conn.row_factory = sqlite3.Row  # カラム名でアクセス可能にする
+            self.cursor = self.conn.cursor()
+            
+            # テーブル作成
+            self.create_tables()
+            print(f"[INFO] SQLite Connected: {self.db_path}")
+            
+        except Exception as e:
+            print(f"[ERROR] SQLite Connection Failed: {e}")
+            self.conn = None
+            self.cursor = None
 
     def create_tables(self):
+        if not self.conn or not self.cursor:
+            return
         """必要なテーブルを全て作成する"""
 
         # 学習ログテーブル (ストップウォッチ用 & 手動記録用)
@@ -40,6 +56,8 @@ class DBManager:
     # 記録管理（手動）
     # -------------------------
     def add_record(self, subject, hours):
+        if not self.conn or not self.cursor:
+            return
         """手動で時間を記録する"""
         now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
@@ -48,6 +66,9 @@ class DBManager:
         self.conn.commit()
 
     def get_records(self):
+        if not self.conn or not self.cursor:
+            return []
+        
         sql = "SELECT * FROM logs ORDER BY id DESC"
         self.cursor.execute(sql)
         rows = self.cursor.fetchall()
@@ -102,6 +123,8 @@ class DBManager:
     # ストップウォッチ機能
     # -------------------------
     def start_session(self, subject_name):
+        if not self.conn or not self.cursor:
+            return
         """計測開始"""
         now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
@@ -112,6 +135,8 @@ class DBManager:
         return self.cursor.lastrowid
 
     def stop_session(self, session_id):
+        if not self.conn or not self.cursor:
+            return
         """計測終了"""
         now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
