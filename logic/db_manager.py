@@ -1,30 +1,59 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import datetime
+import os
 
 class DBManager:
     def __init__(self):
-        # === PostgreSQL接続設定 ===
-        # 本来は環境変数から読み込むべきだが、学習用MVPとしてベタ書きを許容する
+        self.conn = None
+        self.cursor = None
+
+    def connect(self):
+        """アプリ起動後（on_start）または再接続時に呼ばれる"""
+        # 既に生きた接続があれば何もしない
+        if self.conn is not None and self.conn.closed == 0:
+            return
+
         try:
+            # 【対策1】keepalives設定を追加
+            # これにより、無通信状態でも裏で「信号」を送り、切断を防ぐ
             self.conn = psycopg2.connect(
-                host="localhost",
+                host="localhost", # ★ここをIPアドレスに変える
                 dbname="learning_tracker_db",
                 user="hamziro",
-                password="1234",
-                cursor_factory=RealDictCursor  # これにより辞書型(row['key'])で取得可能になる
+                password=os.environ.get("DB_PASSWORD", "YOUR_PASSWORD"),
+                cursor_factory=RealDictCursor,
+                # ▼ 追加設定
+                keepalives=1,           # Keepaliveを有効化
+                keepalives_idle=30,     # 30秒無通信なら信号を送る
+                keepalives_interval=10, # 応答なければ10秒ごとに再送
+                keepalives_count=5      # 5回失敗したら切断とみなす 
             )
-            self.conn.autocommit = False # 明示的にcommitする設定
+            self.conn.autocommit = False
             self.cursor = self.conn.cursor()
             
-            # テーブル作成実行
+            # 接続成功時にテーブル作成
             self.create_tables()
-            
+            print("[INFO] PostgreSQL Connected (with Keepalive).")
+
         except Exception as e:
-            print(f"[DB INIT ERROR] 接続失敗: {e}")
-            raise e
+            print(f"[ERROR] Postgres Connection Failed: {e}")
+            self.conn = None
+            self.cursor = None
+
+    def _ensure_connection(self):
+        """
+        SQL実行直前に呼び出し、接続が切れていたら再接続するヘルパーメソッド
+        """
+        if self.conn is None or self.conn.closed != 0:
+            print("[WARN] Connection lost. Reconnecting...")
+            self.conn = None
+            self.connect()
 
     def create_tables(self):
+        if not self.conn or not self.cursor:
+            return
+        
         """PostgreSQL用のテーブル作成"""
         # SQLite: INTEGER PRIMARY KEY AUTOINCREMENT
         # Postgres: SERIAL PRIMARY KEY
@@ -42,106 +71,136 @@ class DBManager:
             self.cursor.execute(sql_logs)
             self.conn.commit()
         except Exception as e:
-            self.conn.rollback() # エラー時は必ずロールバック
-            print(f"[Create Table Error] {e}")
+            print(f"[Error create_tables] {e}")
+            self.conn.rollback()
 
     # -------------------------
     # 記録管理（手動）
     # -------------------------
     def add_record(self, subject, hours):
-        """手動で時間を記録する"""
-        now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self._ensure_connection() # 念の為チェック
+        if not self.conn:
+            return
         
-        # プレースホルダを ? から %s に変更
-        sql = "INSERT INTO logs (subject_name, hours, date) VALUES (%s, %s, %s)"
         try:
+            now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            sql = "INSERT INTO logs (subject_name, hours, date) VALUES (%s, %s, %s)"
             self.cursor.execute(sql, (subject, hours, now_str))
             self.conn.commit()
-        except Exception as e:
-            self.conn.rollback()
-            print(f"[Add Record Error] {e}")
+        except psycopg2.OperationalError:
+            # エラーが出たら再接続して1回だけリトライ
+            print("[Retry] add_record recovering connection...")
+            self.conn = None
+            self.connect()
+            if self.conn:
+                self.cursor.execute(sql, (subject, hours, now_str))
+                self.conn.commit()
 
     def get_records(self):
-        """全記録を取得（リスト表示用）"""
-        sql = "SELECT * FROM logs ORDER BY id DESC"
-        self.cursor.execute(sql)
-        rows = self.cursor.fetchall()
+        self._ensure_connection()
+        if not self.conn:
+            return []
         
-        results = []
-        for row in rows:
-            # PostgreSQLのRealDictCursorはNoneを返すことがあるため安全策
-            display_date = row["date"] if row["date"] else row["started_at"]
+        try:
+            sql = "SELECT * FROM logs ORDER BY id DESC"
+            self.cursor.execute(sql)
+            rows = self.cursor.fetchall()
             
-            duration_str = "00:00:00"
-            hours_float = 0.0
-            
-            # パターンA: 手動入力
-            if row["hours"] is not None:
-                hours_float = float(row["hours"])
-                duration_str = f"{hours_float}時間"
+            results = []
+            for row in rows:
+                display_date = row["date"] if row["date"] else row["started_at"]
+                
+                duration_str = "00:00:00"
+                hours_float = 0.0
 
-            # パターンB: ストップウォッチ記録
+            if row["hours"] is not None:
+                    hours_float = float(row["hours"])
+                    duration_str = f"{hours_float}時間"
             elif row["started_at"] and row["ended_at"]:
                 try:
                     fmt = '%Y-%m-%d %H:%M:%S'
                     start_dt = datetime.datetime.strptime(row["started_at"], fmt)
                     end_dt = datetime.datetime.strptime(row["ended_at"], fmt)
                     delta = end_dt - start_dt
-                    
                     total_seconds = delta.total_seconds()
-                    hours_float = round(total_seconds / 3600, 4)
-                    
+                    hours_float = round(total_seconds / 3600, 4) 
                     ts = int(total_seconds)
                     h, remainder = divmod(ts, 3600)
                     m, s = divmod(remainder, 60)
                     duration_str = f"{h:02}:{m:02}:{s:02}"
                 except:
-                    duration_str = "エラー"
-                    hours_float = 0.0
-
+                    pass
+            
             results.append({
                 "subject": row["subject_name"],
                 "duration": duration_str,
                 "hours": hours_float,
                 "date": display_date
-            })
-        return results
+                })
+            return results
+        except Exception as e:
+            print(f"[Get Records Error] {e}")
+            self.conn = None # 次回再接続させる
+            return []
 
     # -------------------------
     # ストップウォッチ機能
     # -------------------------
     def start_session(self, subject_name):
-        """計測開始"""
-        now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self._ensure_connection()
+        if not self.conn:
+            return None
         
-        # PostgreSQL特有: IDを取得するために RETURNING id をつける
+        now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         sql = "INSERT INTO logs (subject_name, started_at) VALUES (%s, %s) RETURNING id"
         
         try:
             self.cursor.execute(sql, (subject_name, now_str))
-            new_id = self.cursor.fetchone()['id'] # 戻り値からIDを取り出す
+            new_id = self.cursor.fetchone()['id']
             self.conn.commit()
             return new_id
         except Exception as e:
-            self.conn.rollback()
             print(f"[Start Session Error] {e}")
+            self.conn.rollback()
             return None
 
     def stop_session(self, session_id):
-        """計測終了"""
+        """
+        【対策2】ここが一番重要。長時間経過後に呼ばれるため切断されやすい。
+        エラーが発生したら再接続してリトライする処理を追加。
+        """
+        self._ensure_connection()
+        if not self.conn: return
+
         now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        # プレースホルダを %s に変更
         sql = "UPDATE logs SET ended_at = %s WHERE id = %s"
+
         try:
+            # 1回目のトライ
             self.cursor.execute(sql, (now_str, session_id))
             self.conn.commit()
-        except Exception as e:
-            self.conn.rollback()
-            print(f"[Stop Session Error] {e}")
+            print("[INFO] Session stopped successfully.")
+
+        except psycopg2.OperationalError:
+            # 切断エラーを検知したら、ここに来る
+            print("[WARN] Connection dead during stop_session. Retrying...")
+            
+            # 再接続を試みる
+            self.conn = None
+            self.connect()
+            
+            if self.conn:
+                # 2回目のトライ（リトライ）
+                try:
+                    self.cursor.execute(sql, (now_str, session_id))
+                    self.conn.commit()
+                    print("[INFO] Retry successful.")
+                except Exception as e:
+                    print(f"[ERROR] Retry failed: {e}")
+            else:
+                print("[FATAL] Could not reconnect.")
 
     def __del__(self):
         try:
-            self.conn.close()
-        except:
-            pass
+            if self.conn: self.conn.close()
+        except: pass

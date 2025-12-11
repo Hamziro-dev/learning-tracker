@@ -140,6 +140,9 @@ class LearningTrackerApp(MDApp):
                     style_value[3]
                 ]
 
+        # --------------------------------------------------------
+        # DBマネージャーのインスタンス化
+        # --------------------------------------------------------
         self.db = DBManager()
         
         kv_path = os.path.join(os.path.dirname(__file__), "ui", "app.kv")
@@ -150,10 +153,18 @@ class LearningTrackerApp(MDApp):
         
         return root
     
+    def on_start(self):
+        """
+        ユーザーに画面を見せつつ、裏でDB接続を行う。
+        """
+        # 1. ここで初めてPostgreSQLに接続
+        if hasattr(self.db, 'connect'):
+             self.db.connect()
+        
+        # 2. 接続完了後にデータを取得して表示
+        self.update_records()
+    
     def _snack(self, text: str):
-        """
-        通知用メソッド（Kivy Popup版）
-        """
         if not self.root:
             print(f"[SNACK LOG] {text}")
             return
@@ -219,7 +230,7 @@ class LearningTrackerApp(MDApp):
             screen = self.sm.get_screen("record") 
             container = screen.ids.get("record_list", None)
             if container is None:
-                print("record_list が見つからない。kvの id を確認しろ。")
+                print("record_list が見つからない。kvの id を確認してください。")
                 return
 
             container.clear_widgets()
