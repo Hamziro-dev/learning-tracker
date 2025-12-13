@@ -1,0 +1,1 @@
+$env:DB_PASSWORD = "1234"

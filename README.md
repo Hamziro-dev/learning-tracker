@@ -40,10 +40,11 @@ Python (Kivy/KivyMD) を採用し、Windows等のデスクトップ環境でロ�
 ## システム設計
 
 ### ▼ システム構成図
+
+![Standalone Architecture](docs/architecture.drawio.png)
+
 Windows等のクライアントPC上で完結するスタンドアローン構成です。<br>
 外部サーバーとの通信を行わないため、オフライン環境でも動作し、学習データのプライバシーが保護されます。<br>
-
-<img width="381" height="436" alt="システム構成 drawio" src="https://github.com/user-attachments/assets/a787011d-b1b2-421c-976d-1353b7ad19c7" /><br>
 
 ### ▼ ER図（データ設計）
 YAGNI原則に基づき、認証機能を排除したシングルユーザー・シングルテーブル構成を採用しました。<br>
