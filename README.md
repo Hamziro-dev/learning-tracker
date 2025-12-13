@@ -32,7 +32,9 @@
 ## システム設計 (本ブランチの変更点)
 
 ### ▼ クライアント・サーバー構成
+
 ![System Architecture Diagram](docs/architecture.drawio.png)
+
 本バージョンでは、クライアント（Windows/Python）とデータベース（Linux/PostgreSQL）を分離した **3層スキーマ構成** を採用しています。
 Windows上のアプリから、TCP/IP経由でWSL2上のDBサーバーへ接続し、データを永続化します。
 
@@ -40,6 +42,13 @@ Windows上のアプリから、TCP/IP経由でWSL2上のDBサーバーへ接続�
 - **Client：** Windows 11 (Python / Psycopg2)
 - **Server：** WSL2 Ubuntu 24.04 (PostgreSQL)
 - **Connection：** TCP/IP (localhost:5432)
+
+## データ設計 (ER図)
+
+![ER Diagram](docs/er_diagram.drawio.png)
+
+PostgreSQLの型定義に準拠したスキーマ設計です。
+パフォーマンスと開発速度を優先し、単一テーブル構成を採用しています。
 
 ## 動作環境・セットアップ
 本ブランチの動作には、以下のインフラ構築が必要です。
