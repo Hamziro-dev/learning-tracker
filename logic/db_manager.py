@@ -18,7 +18,7 @@ class DBManager:
             # 【対策1】keepalives設定を追加
             # これにより、無通信状態でも裏で「信号」を送り、切断を防ぐ
             self.conn = psycopg2.connect(
-                host="localhost", # ★ここをIPアドレスに変える
+                host=os.environ.get("DB_HOST", "localhost"),
                 dbname="learning_tracker_db",
                 user="hamziro",
                 password=os.environ.get("DB_PASSWORD", "YOUR_PASSWORD"),
