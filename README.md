@@ -32,6 +32,7 @@
 ## システム設計 (本ブランチの変更点)
 
 ### ▼ クライアント・サーバー構成
+![System Architecture Diagram](docs/architecture.drawio.png)
 本バージョンでは、クライアント（Windows/Python）とデータベース（Linux/PostgreSQL）を分離した **3層スキーマ構成** を採用しています。
 Windows上のアプリから、TCP/IP経由でWSL2上のDBサーバーへ接続し、データを永続化します。
 
