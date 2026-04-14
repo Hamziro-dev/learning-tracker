@@ -92,5 +92,3 @@ python main.py
 
 ## ライセンス
 MIT License
-
-- 開発ログはこちら → [Qiita: ハム二郎の学習記録](https://qiita.com/Hamziro_dev)
