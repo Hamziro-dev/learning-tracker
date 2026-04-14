@@ -99,5 +99,3 @@ BashスクリプトとCronを組み合わせ、毎晩3:00にDBバックアップ
 
 ## ライセンス
 MIT License
-
-- 開発ログはこちら → [Qiita: ハム二郎の学習記録](https://qiita.com/Hamziro_dev)
